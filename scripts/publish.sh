@@ -4,6 +4,9 @@ DEPLOY_BRANCH="weekly"
 TARGET_S3_BUCKET="s3://developer.okta.com-staging"
 REGISTRY="${ARTIFACTORY_URL}/api/npm/npm-okta"
 
+PREPROD_DEPLOY_BRANCH="ua_cd_test_source"
+PROD_DEPLOY_BRANCH="ua_cd_test_weekly"
+
 source "${0%/*}/setup.sh"
 
 require_env_var "OKTA_HOME"
@@ -71,5 +74,20 @@ if ! artifactory_curl -X PUT -u ${ARTIFACTORY_CREDS} ${DATALOAD} -v -f; then
   echo "artifactory_curl failed! Exiting..."
   exit $PUBLISH_ARTIFACTORY_FAILURE
 fi
+
+if [[ "${BRANCH}" == "${PREPROD_DEPLOY_BRANCH}" ]] || [[ "${BRANCH}" == "${PROD_DEPLOY_BRANCH}" ]] ; then
+  ARTIFACT_FILE="$([[ $DATALOAD =~ okta\.github\.io-(.*)\.tgz ]] && echo $BASH_REMATCH)"
+  DEPLOY_VERSION="$([[ $ARTIFACT_FILE =~ okta\.github\.io-(.*)\.tgz ]] && echo ${BASH_REMATCH[1]})"
+  ARTIFACT="@okta/okta.github.io/-/@okta/${ARTIFACT_FILE}"
+  if [[ "${BRANCH}" == "${PREPROD_DEPLOY_BRANCH}" ]] ; then
+    send_promotion_message "developer-okta-com-preprod" "${ARTIFACT}" "${DEPLOY_VERSION}"
+  fi
+  if [[ "${BRANCH}" == "${PROD_DEPLOY_BRANCH}" ]] ; then
+   send_promotion_message "developer-okta-com-prod" "${ARTIFACT}" "${DEPLOY_VERSION}"
+  fi
+fi
+
+
+
 
 exit $SUCCESS
