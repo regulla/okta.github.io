@@ -233,6 +233,7 @@ function fold() {
     echo -en "travis_fold:end:${name}\\r"
 }
 
+# Send promotion message for conductor
 function send_promotion_message() {
     curl -H "Authorization: Bearer ${TESTSERVICE_SLAVE_JWT}" \
       -H "Content-Type: application/json" \
